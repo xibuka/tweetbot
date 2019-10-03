@@ -1,0 +1,43 @@
+
+1. Pull and run the docker image
+```
+$ docker pull wenhan/myidbot
+$ docker run --env-file ./envfile.txt -d --name=myipbot wenhan/myipbot
+```
+
+envfile.txt contains the key and token info as ENV value. Must have below ENV
+or the docker image will failed.
+```
+CONSUMER_KEY=xxxxxxxxxxxxxxxxxxxxxxxxx
+CONSUMER_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ACCESS_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ACCESS_TOKEN_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+2. Create a unit file
+```
+$ vim /etc/systemd/system/docker-myipbot.service
+```
+
+and add the following content
+```
+[Unit]
+Description=Redis container
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker start -a myipbot
+ExecStop=/usr/bin/docker stop -t 2 myipbot
+
+[Install]
+WantedBy=default.target
+```
+
+3. Enable the service at startup
+```
+sudo systemctl enable docker-myipbot.service
+```
+
+Then the docker container should be started on system boot up.

@@ -1,0 +1,14 @@
+[Unit]
+Description=Redis container
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker start -a myipbot
+ExecStop=/usr/bin/docker stop -t 2 myipbot
+
+[Install]
+WantedBy=default.target
+
+
