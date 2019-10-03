@@ -3,6 +3,7 @@ import logging
 from config import create_api
 import time
 import os
+import subprocess
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -15,15 +16,19 @@ def check_mentions(api, keywords, since_id):
         if tweet.in_reply_to_status_id is not None:
             continue
         if any(keyword in tweet.text.lower() for keyword in keywords):
-            logger.info(f"report IP address to {tweet.user.name}")
+            logger.info(f"report IP address to {tweet.user.screen_name}")
 
-            if not tweet.user.following:
+            if not tweet.user.following and not tweet.user.screen_name == 'tweetwalkershi':
                 tweet.user.follow()
 
-            myip = os.system('curl inet-ip.info/ip')
+            myip = subprocess.check_output("curl inet-ip.info/ip", shell=True);
+            myip = myip.decode('ascii');
+            myip = myip.replace(".", "|")
+                      
+            text=f"@{tweet.user.screen_name} Hi, check 121|{myip}|121"
 
             api.update_status(
-                status=myip,
+                status=text,
                 in_reply_to_status_id=tweet.id,
             )
     return new_since_id
