@@ -8,6 +8,9 @@ import subprocess
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
+def get_localhost_public_ip():
+    return subprocess.check_output("curl inet-ip.info/ip", shell=True).decode('ascii').replace(".", "|")
+
 def check_mentions(api, keywords, since_id):
     logger.info("Retrieving mentions")
     new_since_id = since_id
@@ -18,15 +21,9 @@ def check_mentions(api, keywords, since_id):
         if any(keyword in tweet.text.lower() for keyword in keywords):
             logger.info(f"report IP address to {tweet.user.screen_name}")
 
-            if not tweet.user.following and not tweet.user.screen_name == 'tweetwalkershi':
-                tweet.user.follow()
+            myip=get_localhost_public_ip()
 
-            myip = subprocess.check_output("curl inet-ip.info/ip", shell=True);
-            myip = myip.decode('ascii');
-            myip = myip.replace(".", "|")
-                      
-            text=f"@{tweet.user.screen_name} Hi, check 121|{myip}|121"
-
+            text=f"Hi @{tweet.user.screen_name}, check 121|{myip}|121"
             api.update_status(
                 status=text,
                 in_reply_to_status_id=tweet.id,
