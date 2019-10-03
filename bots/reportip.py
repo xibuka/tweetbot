@@ -2,7 +2,6 @@ import tweepy
 import logging
 from config import create_api
 import time
-import os
 import subprocess
 
 logging.basicConfig(level=logging.INFO)
@@ -11,30 +10,29 @@ logger = logging.getLogger()
 def get_localhost_public_ip():
     return subprocess.check_output("curl inet-ip.info/ip", shell=True).decode('ascii').replace(".", "|")
 
-def check_mentions(api, keywords, since_id):
+def check_mentions(api, keywords, start_time):
     logger.info("Retrieving mentions")
-    new_since_id = since_id
-    for tweet in tweepy.Cursor(api.mentions_timeline, since_id=since_id).items():
-        new_since_id = max(tweet.id, new_since_id)
-        if tweet.in_reply_to_status_id is not None:
+    for tweet in tweepy.Cursor(api.mentions_timeline).items():
+        if tweet.created_at <= start_time:
             continue
         if any(keyword in tweet.text.lower() for keyword in keywords):
             logger.info(f"report IP address to {tweet.user.screen_name}")
 
             myip=get_localhost_public_ip()
 
-            text=f"Hi @{tweet.user.screen_name}, check 121|{myip}|121"
-            api.update_status(
-                status=text,
-                in_reply_to_status_id=tweet.id,
-            )
-    return new_since_id
+            api.update_status(f"[{start_time}] Hi @{tweet.user.screen_name}, check 121|{myip}|121")
+
+    return get_last_mentions(api)
+
+def get_last_mentions(api):
+    last_mention=api.mentions_timeline(cound=1)[0]
+    return last_mention.created_at
 
 def main():
     api = create_api()
-    since_id = 1
+    start_time = get_last_mentions(api)
     while True:
-        since_id = check_mentions(api, ["ip"], since_id)
+        start_time = check_mentions(api, ["ip"], start_time)
         logger.info("Waiting...")
         time.sleep(60)
 
